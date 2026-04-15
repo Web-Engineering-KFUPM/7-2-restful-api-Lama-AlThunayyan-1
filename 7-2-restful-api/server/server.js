@@ -1,8 +1,7 @@
 import express from "express";
 import cors from "cors";
-
-// import dotenv and load environment variables from .env
 import dotenv from "dotenv";
+
 dotenv.config();
 
 import { connectDB } from "./db.js";
@@ -11,7 +10,7 @@ import { Song } from "./models/song.model.js";
 const app = express();
 const PORT = process.env.PORT || 5174;
 
-app.use(cors());              
+app.use(cors());
 app.use(express.json());
 
 await connectDB(process.env.MONGO_URL);
@@ -21,6 +20,21 @@ app.get("/api/songs", async (req, res) => {
   try {
     const rows = await Song.find().sort({ createdAt: -1 });
     res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// api/songs/:id (Read one song)
+app.get("/api/songs/:id", async (req, res) => {
+  try {
+    const s = await Song.findById(req.params.id);
+
+    if (!s) {
+      return res.status(404).json({ message: "Song not found" });
+    }
+
+    res.json(s);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -61,7 +75,6 @@ app.put("/api/songs/:id", async (req, res) => {
     res.status(400).json({ message: err.message || "Update failed" });
   }
 });
-
 
 // /api/songs/:id (Delete song)
 app.delete("/api/songs/:id", async (req, res) => {
